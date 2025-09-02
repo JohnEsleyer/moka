@@ -3,10 +3,19 @@ import { View, Text, StyleSheet, Button, FlatList, TouchableOpacity, TextInput, 
 import * as FileSystem from 'expo-file-system';
 import { FileInfo } from 'expo-file-system';
 
-const ROOT_DIRECTORY: string = FileSystem.documentDirectory!;
+const ROOT_DIRECTORY: string = 'notes'
+const ROOT_PATH: string = `${FileSystem.documentDirectory}${ROOT_DIRECTORY}/`;
+
+const ensureDirExists = async () => {
+  const dirInfo = await FileSystem.getInfoAsync(ROOT_PATH);
+  if (!dirInfo.exists){
+    console.log("Directory doesn't exist, creating...");
+    await FileSystem.makeDirectoryAsync(ROOT_PATH, {intermediates: true});
+  }
+}
 
 export default function DirectoryExplorer(): JSX.Element {
-  const [currentPath, setCurrentPath] = useState<string>(ROOT_DIRECTORY);
+  const [currentPath, setCurrentPath] = useState<string>(ROOT_PATH);
   const [directories, setDirectories] = useState<string[]>([]);
   const [newDirName, setNewDirName] = useState<string>('');
 
@@ -30,7 +39,13 @@ export default function DirectoryExplorer(): JSX.Element {
   };
 
   useEffect(() => {
-    fetchDirectories(currentPath);
+    const loadData = async () => {
+      await ensureDirExists();
+      fetchDirectories(currentPath);
+    }
+
+    loadData();
+   
   }, [currentPath]);
 
   const handleCreateDirectory = async (): Promise<void> => {
@@ -68,7 +83,7 @@ export default function DirectoryExplorer(): JSX.Element {
   };
 
   const handleGoBack = (): void => {
-    if (currentPath === ROOT_DIRECTORY) {
+    if (currentPath === ROOT_PATH) {
       return; // Cannot go back from the root
     }
     const parentPath: string = currentPath.substring(0, currentPath.lastIndexOf('/', currentPath.length - 2) + 1);
@@ -90,9 +105,9 @@ export default function DirectoryExplorer(): JSX.Element {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.pathText}>Current Path: {currentPath.replace(ROOT_DIRECTORY, 'root/')}</Text>
+      <Text style={styles.pathText}>Current Path: {currentPath.replace(ROOT_PATH, 'root/')}</Text>
 
-      {currentPath !== ROOT_DIRECTORY && (
+      {currentPath !== ROOT_PATH && (
         <Button title="Go Back" onPress={handleGoBack} />
       )}
 
