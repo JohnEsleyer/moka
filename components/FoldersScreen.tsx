@@ -10,14 +10,6 @@ type FoldersScreenProps = {
   onGoBack: () => void;
 };
 
- const menuItems = [
-    {
-      id: '1',
-      icon: <FolderPlus/>,
-      onPress: () => {}
-    },
-  ]
-
 const FoldersScreen: React.FC<FoldersScreenProps> = ({ folders, isRoot, onFolderPress, onGoBack }) => {
   return (
     <View style={styles.listContainer}>
@@ -36,8 +28,6 @@ const FoldersScreen: React.FC<FoldersScreenProps> = ({ folders, isRoot, onFolder
         )}
         ListEmptyComponent={<Text>No folders found.</Text>}
       />
-     <FloatingMenu menuItems={menuItems}/>
-      
     </View>
   );
 };

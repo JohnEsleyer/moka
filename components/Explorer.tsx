@@ -1,17 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useFocusEffect, useNavigationState } from '@react-navigation/native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import FoldersScreen from './FoldersScreen';
 import FilesScreen from './FilesScreen';
 import FloatingMenu from './FloatingMenu';
-import { FolderPlus, StickyNote } from 'lucide-react-native';
+import { FolderPlus, Navigation, StickyNote } from 'lucide-react-native';
 
 const ROOT_DIRECTORY = 'notes';
 const ROOT_PATH = `${FileSystem.documentDirectory}${ROOT_DIRECTORY}/`;
 
 const Tab = createMaterialTopTabNavigator();
+
+
+// Folder Menus
+const folderMenus =  [
+      {
+        id: '1',
+        icon: <FolderPlus/>,
+        onPress: () => {}
+      }
+];
+
+const fileMenus = [
+      {
+        id: '1',
+        icon: <StickyNote/>,
+        onPress: () => {}
+      },
+]
+
+interface MenuItem {
+  id: string;
+  icon: React.ReactNode;
+  onPress: () => void;
+}
 
 const ensureDirExists = async () => {
   const dirInfo = await FileSystem.getInfoAsync(ROOT_PATH);
@@ -26,6 +50,8 @@ const Explorer = () => {
   const [files, setFiles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPath, setCurrentPath] = useState(ROOT_PATH);
+  const [activeTab, setActiveTab] = useState<string>('Folders');
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(folderMenus);
 
   const listItems = async () => {
     try {
@@ -52,12 +78,9 @@ const Explorer = () => {
       console.error("Failed to list items:", error);
       Alert.alert('Error', 'Failed to read directory contents.');
     } finally {
-
         setLoading(false);
-
-     
     }
-  };
+  };  
 
   const navigateToFolder = (folderName: string) => {
     const newPath = `${currentPath}${folderName}/`;
@@ -77,17 +100,19 @@ const Explorer = () => {
     listItems();
   }, [currentPath]);
 
-  // if (loading) {
-  //   return (
-  //     <View style={styles.container}>
-  //       <ActivityIndicator size="large" color="#0000ff" />
-  //     </View>
-  //   );
-  // }
+  useEffect(() => {
+    console.log(activeTab);
+    if (activeTab == 'Folders'){
+      setMenuItems(folderMenus);
+    }else{
+      setMenuItems(fileMenus);
+    }
 
+  }, [activeTab])
 
   return (
     <NavigationContainer>
+    <View style={styles.container}>
       <Tab.Navigator
         screenOptions={{
           tabBarActiveTintColor: '#0000ff',
@@ -97,19 +122,38 @@ const Explorer = () => {
         }}
       >
         <Tab.Screen name="Folders" options={{ title: 'Folders' }}>
-          {() => (
+          {() => {
+            useFocusEffect(
+              React.useCallback(() => {
+                setActiveTab('Folders');
+              }, [])
+            );
+
+            return (
             <FoldersScreen
               folders={folders}
               isRoot={currentPath === ROOT_PATH}
               onFolderPress={navigateToFolder}
               onGoBack={goBack}
             />
-          )}
+          )}}
         </Tab.Screen>
         <Tab.Screen name="Notes" options={{ title: 'Notes' }}>
-          {() => <FilesScreen files={files} />}
+          {() => {
+            useFocusEffect(
+              React.useCallback(() => {
+                setActiveTab('Notes');
+              }, [])
+            );
+
+            return (
+            <FilesScreen files={files} />
+            )}
+          }
         </Tab.Screen>
       </Tab.Navigator>
+    <FloatingMenu menuItems={menuItems}/>
+    </View>
     </NavigationContainer>
     
   );
@@ -118,8 +162,6 @@ const Explorer = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });
 
