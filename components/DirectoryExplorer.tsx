@@ -1,7 +1,10 @@
 import React, { useState, useEffect, JSX } from 'react';
-import { View, Text, StyleSheet, Button, FlatList, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, Button, FlatList, TouchableOpacity, TextInput, Alert, Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import { FileInfo } from 'expo-file-system';
+import KeyboardAvoidingComponent from '../sandbox';
+import FloatingMenu from './FloatingMenu';
+import { SettingsIcon, FolderPlus, StickyNote } from 'lucide-react-native';
 
 const ROOT_DIRECTORY: string = 'notes'
 const ROOT_PATH: string = `${FileSystem.documentDirectory}${ROOT_DIRECTORY}/`;
@@ -19,19 +22,46 @@ export default function DirectoryExplorer(): JSX.Element {
   const [directories, setDirectories] = useState<string[]>([]);
   const [newDirName, setNewDirName] = useState<string>('');
 
+  // Menu Items
+  const myMenuItems = [
+    {
+      id: '3',
+      icon: <SettingsIcon size={24} color="#fff" />,
+      onPress: () => console.log('Share pressed'),
+    },
+    {
+      id: '1',
+      icon: <FolderPlus size={24} color="#fff" />,
+      onPress: () => console.log('Add location pressed'),
+    },
+    {
+      id: '2',
+      icon: <StickyNote size={24} color="#fff" />,
+      onPress: () => console.log('Edit pressed'),
+    },
+ 
+  ];
+
   // Fetch directories in the current path
   const fetchDirectories = async (path: string): Promise<void> => {
     try {
       const items: string[] = await FileSystem.readDirectoryAsync(path);
-      const dirList: string[] = [];
-      for (const item of items) {
+      const dirInfoList: {name: string; date: number}[] = [];
+
+       for (const item of items) {
         const itemPath: string = `${path}${item}`;
         const info: FileInfo = await FileSystem.getInfoAsync(itemPath);
         if (info.isDirectory) {
-          dirList.push(item);
+          dirInfoList.push({
+            name: item, 
+            date: info.modificationTime,
+          });
         }
       }
-      setDirectories(dirList);
+
+      // Sort the directories by date in descending order (newest first)
+      dirInfoList.sort((a, b) => b.date - a.date);
+      setDirectories(dirInfoList.map(dir => dir.name));
     } catch (error) {
       console.error('Failed to read directory:', error);
       Alert.alert('Error', 'Failed to read directory.');
@@ -105,7 +135,7 @@ export default function DirectoryExplorer(): JSX.Element {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.pathText}>Current Path: {currentPath.replace(ROOT_PATH, 'root/')}</Text>
+      <Text style={styles.pathText}>Current Path: {ROOT_PATH}</Text>
 
       {currentPath !== ROOT_PATH && (
         <Button title="Go Back" onPress={handleGoBack} />
@@ -117,16 +147,9 @@ export default function DirectoryExplorer(): JSX.Element {
         keyExtractor={(item: string) => item}
         style={styles.list}
       />
-
-      <View style={styles.creator}>
-        <TextInput
-          style={styles.input}
-          placeholder="New Directory Name"
-          value={newDirName}
-          onChangeText={setNewDirName}
-        />
-        <Button title="Create" onPress={handleCreateDirectory} />
-      </View>
+      
+      <FloatingMenu menuItems={myMenuItems} />
+ 
     </View>
   );
 }
@@ -138,7 +161,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   pathText: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: 'bold',
     marginBottom: 10,
   },
