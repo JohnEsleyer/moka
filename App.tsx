@@ -1,15 +1,10 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import Explorer from './components/Explorer';
 import Sandbox from './sandbox';
-import * as FileSystem from 'expo-file-system';
-import DirectoryExplorer from './components/DirectoryExplorer';
-
+import TwoTabs from './sandbox';
 
 export default function App() {
 
   return (
-
-     <DirectoryExplorer/>
-  
+     <Explorer/>
   );
 }
