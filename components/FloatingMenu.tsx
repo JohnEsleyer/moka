@@ -1,20 +1,12 @@
 import React, { useState, useRef } from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  Pressable,
-  Animated,
-} from 'react-native';
+import { StyleSheet, Pressable, Animated, View } from 'react-native';
 
-// Define the shape of each menu item
 interface MenuItem {
   id: string;
   icon: React.ReactNode;
   onPress: () => void;
 }
 
-// Define the props for the FloatingMenu component
 interface FloatingMenuProps {
   menuItems: MenuItem[];
 }
@@ -29,29 +21,30 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ menuItems }) => {
       toValue,
       duration: 300,
       useNativeDriver: true,
-    }).start();
-    setIsMenuOpen(!isMenuOpen);
+    }).start(() => setIsMenuOpen(!isMenuOpen));
   };
 
   const rotateInterpolate = animation.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '45deg'],
   });
+
   const mainButtonStyle = {
     transform: [{ rotate: rotateInterpolate }],
   };
 
   return (
+    // 💡 FIX: The main container now has absolute positioning
     <View style={styles.container}>
       {/* Floating Menu Items - Mapped from props */}
-      {menuItems.map((item, index) => {
-        const itemBottom = 70 + (index + 1) * 60; // Calculate a unique bottom position for each item
+      {isMenuOpen && menuItems.map((item, index) => {
+        const itemBottom = 70 + (index + 1) * 60;
 
         const itemStyle = {
-          position: 'absolute',
-          right: 20,
-          bottom: itemBottom,
-          opacity: animation,
+          opacity: animation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, 1],
+          }),
           transform: [
             {
               scale: animation.interpolate({
@@ -64,33 +57,13 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ menuItems }) => {
 
         return (
           <Animated.View
-    key={item.id}
-    style={[
-        // Static styles first
-        styles.menuItem,
-        {
-            position: 'absolute',
-            right: 20,
-            bottom: itemBottom,
-        },
-        // Animated styles next
-        {
-            opacity: animation,
-            transform: [
-                {
-                    scale: animation.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0, 1],
-                    }),
-                },
-            ],
-        },
-    ]}
->
-    <Pressable onPress={item.onPress}>
-        {item.icon}
-    </Pressable>
-</Animated.View>
+            key={item.id}
+            style={[styles.menuItem, { bottom: itemBottom }, itemStyle]}
+          >
+            <Pressable onPress={item.onPress}>
+              {item.icon}
+            </Pressable>
+          </Animated.View>
         );
       })}
 
@@ -106,7 +79,11 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ menuItems }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    // 💡 FIX: Make the container itself an overlay
+    position: 'absolute',
+    bottom: 50,
+    right: 20,
+    alignItems: 'center',
   },
   mainButton: {
     width: 60,
@@ -115,9 +92,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#3498db',
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'absolute',
-    bottom: 50,
-    right: 20,
     elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -130,6 +104,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   menuItem: {
+    // 💡 FIX: These are now positioned relative to the container
+    position: 'absolute',
     width: 45,
     height: 45,
     borderRadius: 22.5,
@@ -141,11 +117,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 2.22,
-  },
-  menuItemText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
   },
 });
 
