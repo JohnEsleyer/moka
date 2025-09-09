@@ -4,11 +4,11 @@ import * as FileSystem from 'expo-file-system';
 import { NavigationContainer, useFocusEffect } from '@react-navigation/native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import FoldersScreen from './FoldersScreen';
-import FilesScreen from './FilesScreen';
+import NoteList from './NoteList'; // Updated component name
 import FloatingMenu from './FloatingMenu';
 import PromptModal from './PromptModal';
-import { FolderPlus, StickyNote } from 'lucide-react-native';
 import ConfirmationModal from './ConfirmationModal';
+import { FolderPlus, StickyNote } from 'lucide-react-native';
 
 const ROOT_DIRECTORY = 'notes';
 const ROOT_PATH = `${FileSystem.documentDirectory}${ROOT_DIRECTORY}/`;
@@ -32,7 +32,6 @@ const ensureDirExists = async () => {
 };
 
 const Explorer = () => {
-
   const [directoryContent, setDirectoryContent] = useState<DirectoryContent>({
     folders: [],
     files: [],
@@ -42,34 +41,11 @@ const Explorer = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState<'folder' | 'file' | null>(null);
+
   const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
-  const [folderToDelete, setFolderToDelete] = useState<string>('');
+  const [itemToDelete, setItemToDelete] = useState<{ name: string, type: 'folder' | 'file' } | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
-
-
-  const handleDeleteFolder = (folderName: string): void => {
-    setFolderToDelete(folderName);
-    setDeleteModalVisible(true);
-  }
-
-  const handleDeleteConfirm = async (): Promise<void> => {
-    try {
-      const folderPath: string = `${currentPath}${folderToDelete}`;
-      await FileSystem.deleteAsync(folderPath, {idempotent: true});
-      listItems();
-    }catch(error: any){
-      Alert.alert('Error', `Failed to delete folder: ${error.message}`);
-    } finally {
-      setDeleteModalVisible(false);
-      setFolderToDelete('');
-    }
-  }
-
-  const handleDeleteCancel = (): void => {
-    setDeleteModalVisible(false);
-    setFolderToDelete('');
-  };
 
   const listItems = async () => {
     const newDirectoryContent: DirectoryContent = { folders: [], files: [] };
@@ -115,7 +91,6 @@ const Explorer = () => {
     setModalVisible(true);
   };
 
-
   const handleModalConfirm = async (name: string) => {
     if (name && name.trim().length > 0) {
       try {
@@ -127,7 +102,7 @@ const Explorer = () => {
           const newFilePath = `${currentPath}${fileNameWithExtension}`;
           await FileSystem.writeAsStringAsync(newFilePath, '');
         }
-        listItems();
+        listItems(); 
       } catch (error) {
         Alert.alert("Error", `Failed to create: ${error}`);
       }
@@ -137,6 +112,30 @@ const Explorer = () => {
 
   const handleModalCancel = () => {
     setModalVisible(false);
+  };
+
+  const handlePrepareDelete = (name: string, type: 'folder' | 'file') => {
+    setItemToDelete({ name, type });
+    setDeleteModalVisible(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return;
+    try {
+      const itemPath = `${currentPath}${itemToDelete.name}`;
+      await FileSystem.deleteAsync(itemPath, { idempotent: true });
+      listItems();
+    } catch (error) {
+      Alert.alert("Error", `Failed to delete: ${error}`);
+    } finally {
+      setDeleteModalVisible(false);
+      setItemToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModalVisible(false);
+    setItemToDelete(null);
   };
 
   const folderMenus = [
@@ -149,7 +148,6 @@ const Explorer = () => {
 
   useEffect(() => {
     listItems();
-
   }, [currentPath]);
 
   useEffect(() => {
@@ -165,10 +163,11 @@ const Explorer = () => {
       <View style={styles.container}>
         <Tab.Navigator
           screenOptions={{
-            tabBarActiveTintColor: '#0000ff',
-            tabBarInactiveTintColor: 'gray',
+            tabBarActiveTintColor: '#000',
+            tabBarInactiveTintColor: '#888',
             tabBarLabelStyle: { fontSize: 16, fontWeight: 'bold', padding: 2, paddingTop: 12 },
             tabBarStyle: { backgroundColor: '#fff' },
+            tabBarIndicatorStyle: { backgroundColor: '#000' },
           }}
         >
           <Tab.Screen name="Folders" options={{ title: 'Folders' }}>
@@ -178,14 +177,13 @@ const Explorer = () => {
                   setActiveTab('Folders');
                 }, [])
               );
-          
               return (
                 <FoldersScreen
                   folders={directoryContent.folders}
                   isRoot={currentPath === ROOT_PATH}
                   onFolderPress={navigateToFolder}
-                  onFolderDelete={handleDeleteFolder}
                   onGoBack={goBack}
+                  onFolderDelete={(name) => handlePrepareDelete(name, 'folder')}
                 />
               );
             }}
@@ -197,8 +195,12 @@ const Explorer = () => {
                   setActiveTab('Notes');
                 }, [])
               );
-         
-              return <FilesScreen files={directoryContent.files} />;
+              return (
+                <NoteList
+                  files={directoryContent.files}
+                  onNoteDelete={(name) => handlePrepareDelete(name, 'file')}
+                />
+              );
             }}
           </Tab.Screen>
         </Tab.Navigator>
@@ -210,13 +212,13 @@ const Explorer = () => {
           onConfirm={handleModalConfirm}
           onCancel={handleModalCancel}
         />
-        <ConfirmationModal 
+        <ConfirmationModal
           visible={deleteModalVisible}
-          title="Delete Folder"
-          message={`Are you sure you want to delete ${folderToDelete}? This action cannot be undone.`}
+          title={`Delete ${itemToDelete?.type === 'folder' ? 'Folder' : 'File'}`}
+          message={`Are you sure you want to delete "${itemToDelete?.name}"? This action cannot be undone.`}
           onConfirm={handleDeleteConfirm}
           onCancel={handleDeleteCancel}
-        /> 
+        />
       </View>
     </NavigationContainer>
   );
@@ -226,6 +228,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     position: 'relative',
+    backgroundColor: '#fff',
   },
   loadingScreen: {
     flex: 1,

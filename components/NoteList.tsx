@@ -1,52 +1,40 @@
-
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
-import * as FileSystem from 'expo-file-system';
-import { FileInfo } from 'expo-file-system';
+import React from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { Trash2, StickyNote } from 'lucide-react-native';
 
 interface NoteListProps {
-  currentPath: string;
+  files: string[]; // Updated to accept a files prop
+  onNoteDelete: (fileName: string) => void;
 }
 
-const NoteList: React.FC<NoteListProps> = ({ currentPath }) => {
-  const [notes, setNotes] = useState<string[]>([]);
-
-  const fetchNotes = async (path: string): Promise<void> => {
-    try {
-      const items: string[] = await FileSystem.readDirectoryAsync(path);
-      const noteNames: string[] = [];
-
-      for (const item of items) {
-        const itemPath: string = `${path}${item}`;
-        const info: FileInfo = await FileSystem.getInfoAsync(itemPath);
-        // Check if it's a file and ends with .md
-        if (!info.isDirectory && item.endsWith('.md')) {
-          noteNames.push(item);
-        }
-      }
-      setNotes(noteNames);
-    } catch (error) {
-      console.error('Failed to read notes:', error);
-      Alert.alert('Error', 'Failed to read notes.');
-    }
-  };
-
-  useEffect(() => {
-    fetchNotes(currentPath);
-  }, [currentPath]);
-
+const NoteList: React.FC<NoteListProps> = ({ files, onNoteDelete }) => {
   const renderNoteItem = ({ item }: { item: string }) => (
-    <TouchableOpacity style={styles.noteItem}>
-      <Text style={styles.noteText}>{item}</Text>
-    </TouchableOpacity>
+    <View style={styles.noteItemContainer}>
+      <TouchableOpacity style={styles.noteItem}>
+        <StickyNote size={24} color="#000" />
+        <Text style={styles.noteText}>{item}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => onNoteDelete(item)}
+        style={styles.deleteButton}
+      >
+        <Trash2 size={20} color="#888" />
+      </TouchableOpacity>
+    </View>
   );
 
   return (
     <View style={styles.container}>
       <FlatList
-        data={notes}
+        data={files} // Use the files prop here
         renderItem={renderNoteItem}
         keyExtractor={item => item}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No notes found.</Text>
+            <Text style={styles.emptySubtitle}>Tap the '+' to create one.</Text>
+          </View>
+        }
       />
     </View>
   );
@@ -55,16 +43,52 @@ const NoteList: React.FC<NoteListProps> = ({ currentPath }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 10,
+    paddingHorizontal: 15,
+  },
+  noteItemContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    backgroundColor: '#eee',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   noteItem: {
-    padding: 15,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    paddingVertical: 15,
+    paddingLeft: 20,
   },
   noteText: {
     fontSize: 16,
+    color: '#000',
+    marginLeft: 15,
+  },
+  deleteButton: {
+    padding: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  emptyText: {
+    fontSize: 20,
+    color: '#888',
+    marginBottom: 5,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#888',
   },
 });
 
