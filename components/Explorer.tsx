@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import * as FileSystem from 'expo-file-system';
-import { NavigationContainer, useFocusEffect } from '@react-navigation/native';
+import { NavigationContainer, NavigationContainerRef, useFocusEffect } from '@react-navigation/native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import FoldersScreen from './FoldersScreen';
 import NoteList from './NoteList';
@@ -44,8 +44,12 @@ const Explorer = () => {
   const [modalType, setModalType] = useState<'folder' | 'file' | null>(null);
   const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
   const [itemToDelete, setItemToDelete] = useState<{ name: string, type: 'folder' | 'file' } | null>(null);
-  const [selectedNote, setSelectedNote] = useState<string | null>(null); // New state for selected note
+  const [selectedNote, setSelectedNote] = useState<string | null>(null); 
+  const [activeTabBeforeNote, setActiveTabBeforeNote] = useState<string>('Notes');
   const [isLoading, setIsLoading] = useState(true);
+
+  const navigationRef = useRef<NavigationContainerRef<any> | null>(null);
+  
 
   const listItems = async () => {
     setIsLoading(true);
@@ -169,14 +173,6 @@ const Explorer = () => {
     }
   }, [activeTab]);
 
-  if (selectedNote) {
-    return (
-      <NoteContent 
-        noteTitle={selectedNote} 
-        onGoBack={() => setSelectedNote(null)} 
-      />
-    );
-  }
 
   return (
     <NavigationContainer>
@@ -213,13 +209,24 @@ const Explorer = () => {
               useFocusEffect(
                 React.useCallback(() => {
                   setActiveTab('Notes');
+                  setActiveTabBeforeNote('Notes');
                 }, [])
               );
+
+              if (selectedNote) {
+              return (
+                <NoteContent 
+                  noteTitle={selectedNote}
+                  onGoBack={() => setSelectedNote(null)}
+                />
+              );
+            }
+
               return (
                 <NoteList
                   files={directoryContent.files}
                   onNoteDelete={(name) => handlePrepareDelete(name, 'file')}
-                  onNotePress={handleNotePress} // Pass the new handler
+                  onNotePress={handleNotePress} 
                 />
               );
             }}
