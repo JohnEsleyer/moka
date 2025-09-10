@@ -45,6 +45,7 @@ const Explorer = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
   const [itemToDelete, setItemToDelete] = useState<{ name: string, type: 'folder' | 'file' } | null>(null);
   const [selectedNote, setSelectedNote] = useState<string | null>(null); 
+  const [fileExtension, setFileExtension] = useState<'md' | 'html'>('md'); // New state for file extension
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -71,9 +72,7 @@ const Explorer = () => {
 
       setSelectedNote(oldTitle);
     }
-
   }
-
 
   const navigationRef = useRef<NavigationContainerRef<any> | null>(null);
 
@@ -124,25 +123,43 @@ const Explorer = () => {
     setModalVisible(true);
   };
 
-  const handleModalConfirm = async (name: string) => {
+  const handleModalConfirm = async (name: string, fileExtension?: 'md' | 'html') => {
     if (name && name.trim().length > 0) {
       try {
+
+        const newPath = `${currentPath}${name}/`;
+        
+
         if (modalType === 'folder') {
+          const dirInfo = await FileSystem.getInfoAsync(newPath);
+          if (dirInfo.exists && dirInfo.isDirectory){
+            Alert.alert("Error", `A folder named "${name}" already exists.`);
+            return;
+          }
           const newFolderPath = `${currentPath}${name}/`;
           await FileSystem.makeDirectoryAsync(newFolderPath);
         } else if (modalType === 'file') {
-          const fileNameWithExtension = name.endsWith('.md') ? name : `${name}.md`;
+          
+          const finalExtension = fileExtension || 'md'; 
+          const fileNameWithExtension = name.endsWith(`.${finalExtension}`) ? name : `${name}.${finalExtension}`;
           const newFilePath = `${currentPath}${fileNameWithExtension}`;
+          const fileInfo = await FileSystem.getInfoAsync(newFilePath);
+          if (fileInfo.exists && !fileInfo.isDirectory){
+            Alert.alert("Error", `A file named "${fileNameWithExtension} already exists.`);
+            return;
+          }
+          
           await FileSystem.writeAsStringAsync(newFilePath, '');
-          setSelectedNote(fileNameWithExtension); 
+          setSelectedNote(fileNameWithExtension);
         }
-        listItems(); 
+        listItems();
       } catch (error) {
         Alert.alert("Error", `Failed to create: ${error}`);
       }
     }
     setModalVisible(false);
   };
+
 
   const handleModalCancel = () => {
     setModalVisible(false);
@@ -235,25 +252,25 @@ const Explorer = () => {
               useFocusEffect(
                 React.useCallback(() => {
                   setActiveTab('Notes');
-               
                 }, [])
               );
 
               if (selectedNote) {
-              return (
-                <NoteContent 
-                  noteTitle={selectedNote}
-                  onGoBack={() => setSelectedNote(null)}
-                  onRenameNote={handleRenameNote}
-                />
-              );
-            }
+                return (
+                  <NoteContent 
+                    noteTitle={selectedNote}
+                    onGoBack={() => setSelectedNote(null)}
+                    onRenameNote={handleRenameNote}
+                  />
+                );
+              }
 
               return (
                 <NoteList
                   files={directoryContent.files}
                   onNoteDelete={(name) => handlePrepareDelete(name, 'file')}
                   onNotePress={handleNotePress} 
+                  currentPath={currentPath}
                 />
               );
             }}
@@ -262,10 +279,11 @@ const Explorer = () => {
         <FloatingMenu menuItems={menuItems} />
         <PromptModal
           visible={modalVisible}
-          title={modalType === 'folder' ? 'Create New Folder' : 'Create New File'}
-          message={modalType === 'folder' ? 'Enter a name for the new folder:' : 'Enter a name for the new file. A .md extension will be added.'}
+          title={modalType === 'folder' ? 'Create New Folder' : 'Create New Note'}
+          message={modalType === 'folder' ? 'Enter a name for the new folder:' : 'Enter a name for the new note and select a file type:'}
           onConfirm={handleModalConfirm}
           onCancel={handleModalCancel}
+          isNoteCreation={modalType === 'file'} 
         />
         <ConfirmationModal
           visible={deleteModalVisible}

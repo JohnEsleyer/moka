@@ -1,13 +1,13 @@
-// PromptModal.tsx
 import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import { Modal, View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from 'react-native';
 
 interface PromptModalProps {
   visible: boolean;
   title: string;
   message: string;
-  onConfirm: (text: string) => void;
+  onConfirm: (text: string, fileExtension?: 'md' | 'html') => void; // Updated line
   onCancel: () => void;
+  isNoteCreation?: boolean;
 }
 
 const PromptModal: React.FC<PromptModalProps> = ({
@@ -16,17 +16,25 @@ const PromptModal: React.FC<PromptModalProps> = ({
   message,
   onConfirm,
   onCancel,
+  isNoteCreation = false, // Default to false
 }) => {
   const [inputText, setInputText] = useState('');
+  const [fileExtension, setFileExtension] = useState<'md' | 'html'>('md'); // New state for file extension
 
   const handleConfirm = () => {
-    onConfirm(inputText);
+    if (isNoteCreation) {
+      onConfirm(inputText, fileExtension);
+    } else {
+      onConfirm(inputText);
+    }
     setInputText('');
+    setFileExtension('md'); // Reset extension on close
   };
 
   const handleCancel = () => {
     onCancel();
     setInputText('');
+    setFileExtension('md'); // Reset extension on close
   };
 
   return (
@@ -45,7 +53,26 @@ const PromptModal: React.FC<PromptModalProps> = ({
             onChangeText={setInputText}
             value={inputText}
             autoFocus={true} 
+            placeholder="Enter name"
           />
+
+          {isNoteCreation && (
+            <View style={styles.extensionContainer}>
+              <TouchableOpacity
+                style={[styles.extensionButton, fileExtension === 'md' && styles.extensionButtonActive]}
+                onPress={() => setFileExtension('md')}
+              >
+                <Text style={[styles.extensionText, fileExtension === 'md' && styles.extensionTextActive]}>.md</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.extensionButton, fileExtension === 'html' && styles.extensionButtonActive]}
+                onPress={() => setFileExtension('html')}
+              >
+                <Text style={[styles.extensionText, fileExtension === 'html' && styles.extensionTextActive]}>.html</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           <View style={styles.buttonContainer}>
             <Button title="Cancel" onPress={handleCancel} color="#888" />
             <Button title="Create" onPress={handleConfirm} />
@@ -93,6 +120,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
+  },
+  extensionContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  extensionButton: {
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginHorizontal: 5,
+  },
+  extensionButtonActive: {
+    backgroundColor: '#007AFF', // A different color for active state
+    borderColor: '#007AFF',
+  },
+  extensionText: {
+    color: '#000',
+    fontWeight: 'bold',
+  },
+  extensionTextActive: {
+    color: '#fff',
   },
 });
 

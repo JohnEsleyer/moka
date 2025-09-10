@@ -34,11 +34,9 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ menuItems }) => {
   };
 
   return (
-    // 💡 FIX: The main container now has absolute positioning
     <View style={styles.container}>
-      {/* Floating Menu Items - Mapped from props */}
       {isMenuOpen && menuItems.map((item, index) => {
-        const itemBottom = 70 + (index + 1) * 60;
+        const itemBottom = 60 + (index + 1) * 40;
 
         const itemStyle = {
           opacity: animation.interpolate({
@@ -67,7 +65,6 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ menuItems }) => {
         );
       })}
 
-      {/* Main Floating Action Button */}
       <Pressable style={styles.mainButton} onPress={toggleMenu}>
         <Animated.Text style={[styles.mainButtonText, mainButtonStyle]}>
           +
@@ -79,9 +76,8 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ menuItems }) => {
 
 const styles = StyleSheet.create({
   container: {
-    // 💡 FIX: Make the container itself an overlay
     position: 'absolute',
-    bottom: 50,
+    bottom: 100,
     right: 20,
     alignItems: 'center',
   },
@@ -89,7 +85,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#3498db',
+    backgroundColor: '#2c3e50', 
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
@@ -104,12 +100,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   menuItem: {
-    // 💡 FIX: These are now positioned relative to the container
     position: 'absolute',
     width: 45,
     height: 45,
     borderRadius: 22.5,
-    backgroundColor: '#f1c40f',
+    backgroundColor: '#ecf0f1', 
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,

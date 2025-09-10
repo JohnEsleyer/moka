@@ -5,6 +5,6 @@ import TwoTabs from './sandbox';
 export default function App() {
 
   return (
-     <Explorer/>
+    <Explorer/>
   );
 }
