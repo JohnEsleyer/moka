@@ -6,10 +6,20 @@ import { ArrowLeft } from 'lucide-react-native';
 interface NoteContentProps {
   noteTitle: string;
   onGoBack: () => void;
+  onRenameNote: (oldTitle: string, newTitle: string) => void;
 }
 
-const NoteContent: React.FC<NoteContentProps> = ({ noteTitle, onGoBack }) => {
+const NoteContent: React.FC<NoteContentProps> = ({ noteTitle, onGoBack, onRenameNote }) => {
   const [noteContent, setNoteContent] = useState('');
+  const [editableTitle, setEditableTitle] = useState(noteTitle);
+
+  const debounce = (func: (...args: any[]) => void, delay: number) => {
+    let timeout: NodeJS.Timeout;
+    return (...args: any[]) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), delay);
+    };
+  };
 
   useEffect(() => {
     const loadNote = async () => {
@@ -23,8 +33,19 @@ const NoteContent: React.FC<NoteContentProps> = ({ noteTitle, onGoBack }) => {
   }, [noteTitle]);
 
   const handleSave = async (text: string) => {
-    await saveNote(noteTitle, text);
     setNoteContent(text); 
+    await saveNote(editableTitle, text);
+  };
+
+  const debouncedRename = debounce((newTitle: string) => {
+    if (newTitle && newTitle.trim().length > 0 && newTitle !== noteTitle) {
+      onRenameNote(noteTitle, newTitle);
+    }
+  }, 500);
+
+  const handleTitleChange = (text: string) => {
+    setEditableTitle(text);
+    debouncedRename(text);
   };
 
   return (
@@ -33,7 +54,11 @@ const NoteContent: React.FC<NoteContentProps> = ({ noteTitle, onGoBack }) => {
         <TouchableOpacity onPress={onGoBack} style={styles.backButton}>
           <ArrowLeft size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.title}>{noteTitle}</Text>
+        <TextInput
+          style={styles.titleInput} 
+          value={editableTitle}
+          onChangeText={handleTitleChange}
+        />
       </View>
       <ScrollView style={styles.contentContainer}>
         <TextInput
@@ -66,9 +91,10 @@ const styles = StyleSheet.create({
   backButton: {
     marginRight: 15,
   },
-  title: {
+  titleInput: {
     fontSize: 20,
     fontWeight: 'bold',
+    flex: 1, 
   },
   contentContainer: {
     flex: 1,

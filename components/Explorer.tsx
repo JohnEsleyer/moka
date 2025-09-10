@@ -45,11 +45,37 @@ const Explorer = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
   const [itemToDelete, setItemToDelete] = useState<{ name: string, type: 'folder' | 'file' } | null>(null);
   const [selectedNote, setSelectedNote] = useState<string | null>(null); 
-  const [activeTabBeforeNote, setActiveTabBeforeNote] = useState<string>('Notes');
+
   const [isLoading, setIsLoading] = useState(true);
 
+  const handleRenameNote = async (oldTitle: string, newTitle: string) => {
+    try{
+      const oldPath = `${currentPath}${oldTitle}`;
+      const newPath = `${currentPath}${newTitle}`;
+
+      // Read the old note's content
+      const content = await FileSystem.readAsStringAsync(oldPath);
+      
+      // Delete the old note file
+      await FileSystem.deleteAsync(oldPath, {idempotent: true});
+
+      // Save the content to a new file with the new name
+      await FileSystem.writeAsStringAsync(newPath, content);
+
+      // Update the selected note state and refresh the list
+      setSelectedNote(newTitle);
+      listItems();
+    }catch(error){
+      console.error('Failed to rename note:', error);
+      Alert.alert('Error', 'Failed to rename note');
+
+      setSelectedNote(oldTitle);
+    }
+
+  }
+
+
   const navigationRef = useRef<NavigationContainerRef<any> | null>(null);
-  
 
   const listItems = async () => {
     setIsLoading(true);
@@ -209,7 +235,7 @@ const Explorer = () => {
               useFocusEffect(
                 React.useCallback(() => {
                   setActiveTab('Notes');
-                  setActiveTabBeforeNote('Notes');
+               
                 }, [])
               );
 
@@ -218,6 +244,7 @@ const Explorer = () => {
                 <NoteContent 
                   noteTitle={selectedNote}
                   onGoBack={() => setSelectedNote(null)}
+                  onRenameNote={handleRenameNote}
                 />
               );
             }
