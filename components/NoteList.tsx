@@ -3,14 +3,15 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native
 import { Trash2, StickyNote } from 'lucide-react-native';
 
 interface NoteListProps {
-  files: string[]; // Updated to accept a files prop
+  files: string[]; 
   onNoteDelete: (fileName: string) => void;
+  onNotePress: (fileName: string) => void; 
 }
 
-const NoteList: React.FC<NoteListProps> = ({ files, onNoteDelete }) => {
+const NoteList: React.FC<NoteListProps> = ({ files, onNoteDelete, onNotePress }) => {
   const renderNoteItem = ({ item }: { item: string }) => (
     <View style={styles.noteItemContainer}>
-      <TouchableOpacity style={styles.noteItem}>
+      <TouchableOpacity style={styles.noteItem} onPress={() => onNotePress(item)}>
         <StickyNote size={24} color="#000" />
         <Text style={styles.noteText}>{item}</Text>
       </TouchableOpacity>
@@ -26,7 +27,7 @@ const NoteList: React.FC<NoteListProps> = ({ files, onNoteDelete }) => {
   return (
     <View style={styles.container}>
       <FlatList
-        data={files} // Use the files prop here
+        data={files} 
         renderItem={renderNoteItem}
         keyExtractor={item => item}
         ListEmptyComponent={

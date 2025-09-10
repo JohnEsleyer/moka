@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import { NavigationContainer, useFocusEffect } from '@react-navigation/native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import FoldersScreen from './FoldersScreen';
-import NoteList from './NoteList'; // Updated component name
+import NoteList from './NoteList';
 import FloatingMenu from './FloatingMenu';
 import PromptModal from './PromptModal';
 import ConfirmationModal from './ConfirmationModal';
-import { FolderPlus, StickyNote } from 'lucide-react-native';
+import NoteContent from './NoteContent'; 
+import { FolderPlus, StickyNote, ArrowLeft } from 'lucide-react-native';
 
 const ROOT_DIRECTORY = 'notes';
 const ROOT_PATH = `${FileSystem.documentDirectory}${ROOT_DIRECTORY}/`;
@@ -41,13 +42,13 @@ const Explorer = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState<'folder' | 'file' | null>(null);
-
   const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
   const [itemToDelete, setItemToDelete] = useState<{ name: string, type: 'folder' | 'file' } | null>(null);
-
+  const [selectedNote, setSelectedNote] = useState<string | null>(null); // New state for selected note
   const [isLoading, setIsLoading] = useState(true);
 
   const listItems = async () => {
+    setIsLoading(true);
     const newDirectoryContent: DirectoryContent = { folders: [], files: [] };
     try {
       await ensureDirExists();
@@ -66,6 +67,8 @@ const Explorer = () => {
       console.error("Failed to list items:", error);
       Alert.alert('Error', 'Failed to read directory contents.');
       setDirectoryContent({ folders: [], files: [] });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -101,6 +104,7 @@ const Explorer = () => {
           const fileNameWithExtension = name.endsWith('.md') ? name : `${name}.md`;
           const newFilePath = `${currentPath}${fileNameWithExtension}`;
           await FileSystem.writeAsStringAsync(newFilePath, '');
+          setSelectedNote(fileNameWithExtension); 
         }
         listItems(); 
       } catch (error) {
@@ -125,6 +129,9 @@ const Explorer = () => {
       const itemPath = `${currentPath}${itemToDelete.name}`;
       await FileSystem.deleteAsync(itemPath, { idempotent: true });
       listItems();
+      if (selectedNote === itemToDelete.name) {
+        setSelectedNote(null);
+      }
     } catch (error) {
       Alert.alert("Error", `Failed to delete: ${error}`);
     } finally {
@@ -136,6 +143,10 @@ const Explorer = () => {
   const handleDeleteCancel = () => {
     setDeleteModalVisible(false);
     setItemToDelete(null);
+  };
+
+  const handleNotePress = (fileName: string) => {
+    setSelectedNote(fileName);
   };
 
   const folderMenus = [
@@ -157,6 +168,15 @@ const Explorer = () => {
       setMenuItems(fileMenus);
     }
   }, [activeTab]);
+
+  if (selectedNote) {
+    return (
+      <NoteContent 
+        noteTitle={selectedNote} 
+        onGoBack={() => setSelectedNote(null)} 
+      />
+    );
+  }
 
   return (
     <NavigationContainer>
@@ -199,6 +219,7 @@ const Explorer = () => {
                 <NoteList
                   files={directoryContent.files}
                   onNoteDelete={(name) => handlePrepareDelete(name, 'file')}
+                  onNotePress={handleNotePress} // Pass the new handler
                 />
               );
             }}
