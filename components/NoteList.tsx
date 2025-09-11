@@ -39,17 +39,24 @@ const NoteList: React.FC<NoteListProps> = ({ files, onNoteDelete, onNotePress, c
   };
 
   const renderNoteItem = ({ item }: { item: string }) => {
-    const isMarkdown = item.endsWith('.md');
-    const isHtml = item.endsWith('.html');
+    const fileNameWithoutExtension = item.split('.').slice(0, -1).join('.');
+    const fileExtension = item.split('.').pop();
+    const isMarkdown = fileExtension === 'md';
+    const isHtml = fileExtension === 'html';
     
     const noteIcon = isHtml ? <FileCode2 size={24} color="#E44D26" /> : <StickyNote size={24} color="#000" />;
-    const noteItemStyle = isHtml ? styles.htmlNoteItem : styles.markdownNoteItem;
+    const noteItemBackgroundColor = isHtml ? '#F0E68C' : '#E6E6FA'; // HTML: Khaki, Markdown: Lavender
 
     return (
-      <View style={[styles.noteItemContainer, noteItemStyle]}>
+      <View style={[styles.noteItemContainer, { backgroundColor: noteItemBackgroundColor }]}>
         <TouchableOpacity style={styles.noteItem} onPress={() => onNotePress(item)}>
-          {noteIcon}
-          <Text style={styles.noteText}>{item}</Text>
+          <View style={styles.iconAndExtension}>
+            {noteIcon}
+            {fileExtension && (
+              <Text style={styles.noteExtension}>{fileExtension.toUpperCase()}</Text>
+            )}
+          </View>
+          <Text style={styles.noteTitle}>{fileNameWithoutExtension}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => onNoteDelete(item)}
@@ -90,45 +97,43 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 15,
+    backgroundColor: '#F5F5F5', 
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    marginBottom: 10,
+    borderBottomColor: '#E0E0E0',
+    marginBottom: 15,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
+    color: '#333',
   },
   sortButton: {
-    padding: 8,
-    backgroundColor: '#ddd',
-    borderRadius: 5,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 8,
   },
   sortButtonText: {
     fontWeight: 'bold',
+    color: '#555',
   },
   noteItemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 12,
     borderRadius: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  markdownNoteItem: {
-    backgroundColor: '#E6E6FA',
-  },
-  htmlNoteItem: {
-    backgroundColor: '#F0E68C',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
   },
   noteItem: {
     flexDirection: 'row',
@@ -137,10 +142,20 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingLeft: 20,
   },
-  noteText: {
-    fontSize: 16,
+  iconAndExtension: {
+    alignItems: 'center',
+    width: 40,
+  },
+  noteTitle: {
+    fontSize: 17,
     color: '#000',
+    fontWeight: '600',
     marginLeft: 15,
+  },
+  noteExtension: {
+    fontSize: 10,
+    color: '#666',
+    marginTop: 2,
   },
   deleteButton: {
     padding: 15,
@@ -151,16 +166,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 50,
+    marginTop: 80,
   },
   emptyText: {
-    fontSize: 20,
-    color: '#888',
-    marginBottom: 5,
+    fontSize: 22,
+    color: '#A0A0A0',
+    marginBottom: 8,
+    fontWeight: '500',
   },
   emptySubtitle: {
-    fontSize: 14,
-    color: '#888',
+    fontSize: 16,
+    color: '#A0A0A0',
   },
 });
 
