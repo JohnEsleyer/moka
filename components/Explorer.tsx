@@ -5,7 +5,7 @@ import { NavigationContainer, NavigationContainerRef, useFocusEffect } from '@re
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import FoldersScreen from './FoldersScreen';
 import NoteList from './NoteList';
-import FloatingMenu from './FloatingMenu';
+import FloatingButton from './FloatingButton';
 import PromptModal from './PromptModal';
 import ConfirmationModal from './ConfirmationModal';
 import NoteContent from './NoteContent'; 
@@ -40,7 +40,6 @@ const Explorer = () => {
   });
   const [currentPath, setCurrentPath] = useState(ROOT_PATH);
   const [activeTab, setActiveTab] = useState<string>('Folders');
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState<'folder' | 'file' | null>(null);
   const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
@@ -200,28 +199,11 @@ const Explorer = () => {
     setSelectedNote(fileName);
   };
 
-  const folderMenus = [
-    { id: 'create-folder', icon: <FolderPlus />, onPress: handleCreateFolder }
-  ];
-
-   const fileMenus = [
-    { id: 'create-file', icon: <StickyNote />, onPress: handleCreateFile }
-  ];
-
 
   useEffect(() => {
     listItems();
   }, [currentPath]);
 
-   useEffect(() => {
-    if (activeTab === 'Folders') {
-        setMenuItems(folderMenus);
-    } else if (activeTab === 'Notes') {
-        setMenuItems(fileMenus);
-    } else { 
-        setMenuItems([]);
-    }
-  }, [activeTab]);
 
 
   return (
@@ -293,7 +275,16 @@ const Explorer = () => {
         }}
           </Tab.Screen>
         </Tab.Navigator>
-        <FloatingMenu menuItems={menuItems} />
+        {
+          activeTab == 'Folders' && (
+            <FloatingButton icon={<FolderPlus color="#fff" />} onPress={handleCreateFolder} />
+          )
+        }
+        {
+          activeTab === 'Notes' && (
+            <FloatingButton icon={<StickyNote color="#fff" />} onPress={handleCreateFile} />
+          )
+        }
         <PromptModal
           visible={modalVisible}
           title={modalType === 'folder' ? 'Create New Folder' : 'Create New Note'}
