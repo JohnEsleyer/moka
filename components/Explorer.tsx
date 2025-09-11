@@ -9,7 +9,8 @@ import FloatingMenu from './FloatingMenu';
 import PromptModal from './PromptModal';
 import ConfirmationModal from './ConfirmationModal';
 import NoteContent from './NoteContent'; 
-import { FolderPlus, StickyNote, ArrowLeft } from 'lucide-react-native';
+import { FolderPlus, StickyNote, ArrowLeft, Cog } from 'lucide-react-native';
+import SettingsScreen from './SettingsScreen';
 
 const ROOT_DIRECTORY = 'notes';
 const ROOT_PATH = `${FileSystem.documentDirectory}${ROOT_DIRECTORY}/`;
@@ -45,25 +46,29 @@ const Explorer = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
   const [itemToDelete, setItemToDelete] = useState<{ name: string, type: 'folder' | 'file' } | null>(null);
   const [selectedNote, setSelectedNote] = useState<string | null>(null); 
-  const [fileExtension, setFileExtension] = useState<'md' | 'html'>('md'); // New state for file extension
+  const [showSettingsButton, setShowSettingsButton] = useState<boolean>(true);
+
+  const settingsMenu = [
+    { id: '1', icon: <Cog />, onPress: () => navigationRef.current?.navigate('Settings') }
+  ]
+
+
+  const navigationRef = useRef<NavigationContainerRef<any | null>>(null);
 
   const [isLoading, setIsLoading] = useState(true);
+
 
   const handleRenameNote = async (oldTitle: string, newTitle: string) => {
     try{
       const oldPath = `${currentPath}${oldTitle}`;
       const newPath = `${currentPath}${newTitle}`;
 
-      // Read the old note's content
       const content = await FileSystem.readAsStringAsync(oldPath);
       
-      // Delete the old note file
       await FileSystem.deleteAsync(oldPath, {idempotent: true});
 
-      // Save the content to a new file with the new name
       await FileSystem.writeAsStringAsync(newPath, content);
 
-      // Update the selected note state and refresh the list
       setSelectedNote(newTitle);
       listItems();
     }catch(error){
@@ -74,7 +79,6 @@ const Explorer = () => {
     }
   }
 
-  const navigationRef = useRef<NavigationContainerRef<any> | null>(null);
 
   const listItems = async () => {
     setIsLoading(true);
@@ -197,22 +201,25 @@ const Explorer = () => {
   };
 
   const folderMenus = [
-    { id: '1', icon: <FolderPlus />, onPress: handleCreateFolder }
+    { id: 'create-folder', icon: <FolderPlus />, onPress: handleCreateFolder }
   ];
 
-  const fileMenus = [
-    { id: '1', icon: <StickyNote />, onPress: handleCreateFile }
+   const fileMenus = [
+    { id: 'create-file', icon: <StickyNote />, onPress: handleCreateFile }
   ];
+
 
   useEffect(() => {
     listItems();
   }, [currentPath]);
 
-  useEffect(() => {
+   useEffect(() => {
     if (activeTab === 'Folders') {
-      setMenuItems(folderMenus);
-    } else {
-      setMenuItems(fileMenus);
+        setMenuItems(folderMenus);
+    } else if (activeTab === 'Notes') {
+        setMenuItems(fileMenus);
+    } else { 
+        setMenuItems([]);
     }
   }, [activeTab]);
 
@@ -274,6 +281,16 @@ const Explorer = () => {
                 />
               );
             }}
+          </Tab.Screen>
+          <Tab.Screen name="Settings" options={{title: 'Settings'}}>
+         {() => {
+            useFocusEffect(
+                React.useCallback(() => {
+                    setActiveTab('Settings');
+                }, [])
+            );
+            return <SettingsScreen />;
+        }}
           </Tab.Screen>
         </Tab.Navigator>
         <FloatingMenu menuItems={menuItems} />

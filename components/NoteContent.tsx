@@ -127,13 +127,14 @@ const NoteContent: React.FC<NoteContentProps> = ({ noteTitle, onGoBack, onRename
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onGoBack} style={styles.backButton}>
-          <ArrowLeft size={24} color="#000" />
+          <ArrowLeft size={24} color="#333" />
         </TouchableOpacity>
         <TextInput
           style={styles.titleInput} 
           value={editableTitle}
           onChangeText={handleTitleChange}
           placeholder="Note Title"
+          placeholderTextColor="#A0A0A0"
         />
         <TouchableOpacity onPress={toggleMode} style={styles.toggleButton}>
           <Text style={styles.toggleButtonText}>
@@ -149,34 +150,41 @@ const NoteContent: React.FC<NoteContentProps> = ({ noteTitle, onGoBack, onRename
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F5F5F5', // Soft, light gray background
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
-    paddingTop: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    backgroundColor: '#FFFFFF', // White background for the header
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    zIndex: 1, // Ensures shadow is visible
   },
   backButton: {
     marginRight: 15,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
   },
   titleInput: {
     fontSize: 20,
     fontWeight: 'bold',
     flex: 1,
+    color: '#333',
   },
   toggleButton: {
     marginLeft: 10,
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#E0E0E0', // Same as sort button
+    borderRadius: 8, // Same as sort button
   },
   toggleButtonText: {
-    fontSize: 14,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#555', // Same as sort button
   },
   contentContainer: {
     flex: 1,
@@ -186,10 +194,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000',
     flex: 1,
+    padding: 15, // Added padding for better visual spacing
   },
   webView: {
     flex: 1,
-    backgroundColor: '#fff'
+    backgroundColor: '#fff',
+    padding: 15,
   },
   codeEditor: {
     flex: 1,
