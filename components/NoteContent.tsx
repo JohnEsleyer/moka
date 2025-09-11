@@ -4,6 +4,7 @@ import { WebView } from 'react-native-webview';
 import Markdown from 'react-native-markdown-display';
 import { saveNote, readNote } from '../utils/fileSystem'; 
 import { ArrowLeft } from 'lucide-react-native'; 
+import CodeEditor, { CodeEditorSyntaxStyles } from '@rivascva/react-native-code-editor';
 
 interface NoteContentProps {
   noteTitle: string;
@@ -60,6 +61,20 @@ const NoteContent: React.FC<NoteContentProps> = ({ noteTitle, onGoBack, onRename
 
   const renderContent = () => {
     if (!isMarkdownPreviewMode) {
+      if (fileExtension === 'html') {
+        return (
+          <CodeEditor
+            style={styles.codeEditor}
+            initialValue={noteContent}
+            onChange={handleSave}
+            language="xml"
+            syntaxStyle={CodeEditorSyntaxStyles.atomOneDark}
+            showLineNumbers
+          />
+        );
+      }
+
+      // Default to TextInput for other file types in edit mode
       return (
         <TextInput 
           style={styles.textInput}
@@ -73,6 +88,7 @@ const NoteContent: React.FC<NoteContentProps> = ({ noteTitle, onGoBack, onRename
       );
     }
 
+    // Preview Mode
     if (fileExtension === 'md') {
       return (
         <ScrollView style={styles.contentContainer}>
@@ -93,7 +109,7 @@ const NoteContent: React.FC<NoteContentProps> = ({ noteTitle, onGoBack, onRename
       );
     }
 
-    // Default case for any other file types
+    // Default case for any other file types in preview mode
     return (
       <TextInput 
         style={styles.textInput}
@@ -174,6 +190,11 @@ const styles = StyleSheet.create({
   webView: {
     flex: 1,
     backgroundColor: '#fff'
+  },
+  codeEditor: {
+    flex: 1,
+    padding: 15,
+    fontSize: 14,
   }
 });
 

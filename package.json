@@ -12,6 +12,7 @@
   "dependencies": {
     "@react-navigation/material-top-tabs": "^7.3.7",
     "@react-navigation/native": "^7.1.17",
+    "@rivascva/react-native-code-editor": "^1.2.2",
     "expo": "~53.0.22",
     "expo-blur": "~14.1.5",
     "expo-file-system": "~18.1.11",
@@ -24,7 +25,8 @@
     "react-native-pager-view": "^6.9.1",
     "react-native-render-html": "^6.3.4",
     "react-native-tab-view": "^4.1.3",
-    "react-native-webview": "^13.16.0"
+    "react-native-webview": "^13.16.0",
+    "react-syntax-highlighter": "^15.6.6"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
