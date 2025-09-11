@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import { WebView } from 'react-native-webview';
 import Markdown from 'react-native-markdown-display';
 import { saveNote, readNote } from '../utils/fileSystem'; 
 import { ArrowLeft } from 'lucide-react-native'; 
@@ -14,12 +15,15 @@ const NoteContent: React.FC<NoteContentProps> = ({ noteTitle, onGoBack, onRename
   const [noteContent, setNoteContent] = useState('');
   const [editableTitle, setEditableTitle] = useState(noteTitle);
   const [isMarkdownPreviewMode, setIsMarkdownPreviewMode] = useState(true);
+  const fileExtension = noteTitle.split('.').pop();
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const debounce = (func: (...args: any[]) => void, delay: number) => {
-    let timeout: NodeJS.Timeout;
     return (...args: any[]) => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func(...args), delay);
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+      debounceTimeout.current = setTimeout(() => func(...args), delay);
     };
   };
 
@@ -54,6 +58,55 @@ const NoteContent: React.FC<NoteContentProps> = ({ noteTitle, onGoBack, onRename
     setIsMarkdownPreviewMode(!isMarkdownPreviewMode);
   };
 
+  const renderContent = () => {
+    if (!isMarkdownPreviewMode) {
+      return (
+        <TextInput 
+          style={styles.textInput}
+          multiline 
+          value={noteContent}
+          onChangeText={handleSave}
+          textAlignVertical="top"
+          placeholder="Start writing..."
+          placeholderTextColor="#888"
+        />
+      );
+    }
+
+    if (fileExtension === 'md') {
+      return (
+        <ScrollView style={styles.contentContainer}>
+          <Markdown style={markdownStyles}>
+            {noteContent}
+          </Markdown>
+        </ScrollView>
+      );
+    }
+
+    if (fileExtension === 'html') {
+      return (
+        <WebView
+          originWhitelist={['*']}
+          source={{ html: noteContent }}
+          style={styles.webView}
+        />
+      );
+    }
+
+    // Default case for any other file types
+    return (
+      <TextInput 
+        style={styles.textInput}
+        multiline 
+        value={noteContent}
+        onChangeText={handleSave}
+        textAlignVertical="top"
+        placeholder="Start writing..."
+        placeholderTextColor="#888"
+      />
+    );
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -72,23 +125,7 @@ const NoteContent: React.FC<NoteContentProps> = ({ noteTitle, onGoBack, onRename
           </Text>
         </TouchableOpacity>
       </View>
-      <ScrollView style={styles.contentContainer}>
-        {isMarkdownPreviewMode ? (
-          <Markdown style={markdownStyles}>
-            {noteContent}
-          </Markdown>
-        ) : (
-          <TextInput
-            style={styles.textInput}
-            multiline
-            value={noteContent}
-            onChangeText={handleSave}
-            textAlignVertical="top" 
-            placeholder="Start writing..."
-            placeholderTextColor="#888"
-          />
-        )}
-      </ScrollView>
+      {renderContent()}
     </View>
   );
 };
@@ -134,6 +171,10 @@ const styles = StyleSheet.create({
     color: '#000',
     flex: 1,
   },
+  webView: {
+    flex: 1,
+    backgroundColor: '#fff'
+  }
 });
 
 const markdownStyles = StyleSheet.create({
