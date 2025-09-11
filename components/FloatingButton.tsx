@@ -24,6 +24,7 @@ const FloatingButton: React.FC<FloatingMenuProps> = ({ icon, onPress}) => {
             toValue: 0.9,
             useNativeDriver: true,
           }).start();
+          onPress();
         }}
         onPressOut={() => {
           Animated.spring(scaleAnimation, {
@@ -31,7 +32,7 @@ const FloatingButton: React.FC<FloatingMenuProps> = ({ icon, onPress}) => {
             friction: 3,
             tension: 40,
             useNativeDriver: true,
-          }).start(() => onPress());
+          }).start();
         }}
       >{icon}</Pressable>
     </Animated.View>
